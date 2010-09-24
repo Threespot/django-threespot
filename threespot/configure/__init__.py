@@ -44,10 +44,10 @@ class SettingsManager(object):
     
     registry = {}
     
-    def __init__(namespace=''):
+    def __init__(self, namespace=''):
         self.namespace = namespace and namespace.upper() + '_' or ''
 
-    def create(setting_name, default=None, required=False):
+    def create(self, setting_name, default=None, required=False):
         """
         Creates a new setting for your application. The `default` argument is 
         the value you want your application to have. The `required` causes the 
