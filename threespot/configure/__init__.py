@@ -1,6 +1,6 @@
 from os import path
 
-from django.core.exception import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured
 
 """
 Utilities for working with Django settings.
