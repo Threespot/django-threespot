@@ -61,5 +61,5 @@ class SettingsManager(object):
                 raise ImproperlyConfigured, (
                 "%s must be set to use this django application."         
                 ) % setting_name
-        registry[setting_name] = getattr(settings, setting_name, default)
-        return registry[setting_name]
+        self.registry[setting_name] = getattr(settings, setting_name, default)
+        return self.registry[setting_name]
