@@ -1,5 +1,6 @@
 from os import path
 
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
 """
