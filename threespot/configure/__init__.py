@@ -7,11 +7,11 @@ from django.core.exceptions import ImproperlyConfigured
 Utilities for working with Django settings.
 """
 
-def get_folder_path(dirname):
-    """ Return the full path to the ``dirname`` in this directory."""
+def get_folder_path(module, dirname):
+    """ Return the full path to the ``dirname`` in module directory."""
     
     
-    here = path.dirname(__file__)
+    here = path.dirname(module.__file__)
     return path.normpath(path.join(here, dirname))
 
 class SettingsManager(object):
