@@ -59,7 +59,7 @@ class CKEditor(forms.Textarea):
                     %(pallete)s,
                     %(additional_plugins_js)s
                 ]
-            }
+            });
         </script>"""    
         return mark_safe(template % {
             'additional_plugins_js': mark_safe(self.additional_plugins_js),
