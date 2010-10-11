@@ -55,7 +55,7 @@ class CKEditor(forms.Textarea):
                 %(options)s,
                 toolbar : [
                     %(pallete)s,
-                    %(additional_plugins_js)
+                    %(additional_plugins_js)s
                 ]
         </script>"""    
         return template % {
