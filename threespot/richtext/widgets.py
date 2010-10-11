@@ -52,7 +52,7 @@ class CKEditor(forms.Textarea):
     
     def render(self, name, value, attrs=None):
         template = """%(field)s
-        <style> label[for=id_%(field_name)s] { padding: 0 0 4px 4px; float: none; width: auto;} </style>
+        <style type="text/css"> label[for=id_%(field_name)s] { padding: 0 0 4px 4px; float: none; width: auto;} </style>
         <script type="text/javascript">
             var %(field_variable_name)s_CKeditor = new CKEDITOR.replace('id_%(field_name)s', {
                 %(options)s,
