@@ -58,11 +58,11 @@ class CKEditor(forms.Textarea):
                     %(additional_plugins_js)s
                 ]
         </script>"""    
-        return template % {
+        return mark_safe(template % {
             'additional_plugins_js': mark_safe(self.additional_plugins_js),
             'field': super(CKEditor, self).render(name, value, attrs),
             'field_name': name,
             'field_variable_name': name.replace("-", "_"),
-            'options': mark_safe(self._serialize_script_params()),
-            'pallete': mark_safe(self.pallete),
-        }
+            'options': self._serialize_script_params(),
+            'pallete': self.pallete,
+        })
