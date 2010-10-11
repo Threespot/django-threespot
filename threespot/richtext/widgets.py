@@ -7,6 +7,8 @@ from django.utils.translation import get_language
 from palettes import full_pallete
 
 CKEDITOR_PATH = getattr(settings, 'THREESPOT_CKEDITOR_PATH', '') 
+if not CKEDITOR_PATH.endswith("/"):
+    CKEDITOR_PATH += "/"
 
 class CKEditor(forms.Textarea):
     """A richtext editor widget that uses CKEditor.
@@ -57,6 +59,7 @@ class CKEditor(forms.Textarea):
                     %(pallete)s,
                     %(additional_plugins_js)s
                 ]
+            }
         </script>"""    
         return mark_safe(template % {
             'additional_plugins_js': mark_safe(self.additional_plugins_js),
