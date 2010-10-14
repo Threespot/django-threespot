@@ -11,16 +11,16 @@ def validate_file_size(file, max_size_kb=1024, label='file'):
     that are too large.
     """
     max_size_bytes = (max_size_kb * 1024)
-    if file.size > max_size_bytes
+    if file.size > max_size_bytes:
         fs = get_readable_file_size(max_size_bytes)
         raise forms.ValidationError, (
-            "At %s, %s is too large. A %s can be "
-            "no larger than %s."
+            "At %s, this %s is too large. %s is the maximum size "
+            "allowed for any %s."
         ) % (
-            get_readable_file_size(max_size_bytes)
+            get_readable_file_size(file.size),
             label,
-            label.capitalize(),
-            get_readable_file_size(max_size_kb)
+            get_readable_file_size(max_size_bytes),
+            label,
         )
 
 # A common use-case, planned for:
