@@ -23,3 +23,10 @@ def unescape(text):
                 pass
         return text
     return re.sub("&#?\w+;", fixup, text)
+
+def get_readable_file_size(size):
+    """Returns a human-readable file size given a file size (in bytes)"""
+    for t in ('bytes', 'KB', 'MB', 'GB', 'TB'):
+        if size < 1024.0:
+            return "%3.1f %s" % (size, t)
+        size /= 1024.0
