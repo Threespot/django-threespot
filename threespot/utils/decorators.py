@@ -22,7 +22,7 @@ def annotate(**kwargs):
 
 def return_json(view_func):
     """
-    Decorator for a vew function that sets the repsonse's content-type 
+    Decorator for a view function that sets the response's content-type 
     header to `application/json`.
     """
     def _wrapped_view_func(request, *args, **kwargs):

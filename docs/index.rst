@@ -14,3 +14,5 @@ Contents:
     components/cache
     components/configure
     components/documentation
+    components/functional
+    components/geo
