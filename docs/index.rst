@@ -13,3 +13,4 @@ Contents:
     install
     components/cache
     components/configure
+    components/documentation
