@@ -31,7 +31,6 @@ class Command(BaseCommand):
         return super(Command, self).__init__()
     
     def handle(self, *args, **options):
-        # FIXME: Handler for case where sphinx is not installed?
         try:
             subprocess.check_call([
                 'sphinx-build',
@@ -40,10 +39,21 @@ class Command(BaseCommand):
                 app_settings.SOURCE_LOCATION,
                 app_settings.PUBLISH_PATH
             ])
-        except subprocess.CalledProcessError:
-            self.stdout.write(
-                "Docs failed to publish to: %s.\n" % app_settings.PUBLISH_PATH
-            )
+        except subprocess.CalledProcessError, e:
+            self.stdout.write((
+                "Docs failed to publish to: %s Are you sure that the "
+                "documents source location is correct and the publish path "
+                "is writable?\n"
+            )% app_settings.PUBLISH_PATH)
+        except OSError, e:
+            if e[0] == 2:
+                err = (
+                    "Error: sphinx-build could not be found. Are you sure "
+                    "Sphinx is installed?\n"
+                )
+            else:
+                err = e[1] + "\n"
+            self.stdout.write(err)            
         else:       
             self.stdout.write(
                 "Docs published to: %s.\n" % app_settings.PUBLISH_PATH
