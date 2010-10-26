@@ -6,7 +6,7 @@ from django.utils.hashcompat import md5_constructor
 from django.utils.http import urlquote
 
 """
-Functions for expiring higher-level django caches.
+This module contains functions for expiring higher-level django caches.
 """
 
 def expire_view_cache(view_name, args=[], kwargs={}, namespace=None,\
