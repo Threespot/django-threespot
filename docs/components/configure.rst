@@ -12,6 +12,8 @@ Here's an example, creating settings for an app named `foo`. When you
 create a new instance of the manager, you can (optionally) include a 
 namespace::
 
+    from threespot.configure import SettingsManager
+    
     foo_settings_mgr = SettingsManager("FOO")
 
 ...and then define various settings for your app::
