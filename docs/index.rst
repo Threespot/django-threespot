@@ -11,8 +11,10 @@ Contents:
     :maxdepth: 1
 
     install
+    components/admin
     components/cache
     components/configure
     components/documentation
     components/functional
     components/geo
+    
