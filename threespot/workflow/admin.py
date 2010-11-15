@@ -86,9 +86,20 @@ class WorkflowAdmin(AdminParentClass):
             )
     
         if request.POST: # The user has already confirmed the copy.
+            if obj.is_draft_copy():
+                self.message_user(
+                    request, 
+                    _('You cannot copy a draft copy.')
+                )            
+                return HttpResponseRedirect(request.path)
+            if obj.get_draft_copy():
+                self.message_user(
+                    request, 
+                    _('A draft copy already exists.')
+                )
+                return HttpResponseRedirect(request.path)
             obj_display = force_unicode(obj) + " copied."
             self.log_change(request, obj, obj_display)
-            
             copy = self._copy_item(obj)
 
             self.message_user(
