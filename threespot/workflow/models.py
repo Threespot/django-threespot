@@ -38,7 +38,7 @@ class WorkflowMixin(models.Model):
     
     def unpublish(self, status=UNPUBLISHED_STATES[0][0]):
         """Convenience method to unpublish a post"""        
-        if self.status != status
+        if self.status != status:
             self.status = status
             self.save()
             return True

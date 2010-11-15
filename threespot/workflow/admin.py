@@ -18,11 +18,13 @@ from app_settings import UNPUBLISHED_STATES, PUBLISHED_STATE, \
     USE_DJANGO_REVERSION
 
 if USE_DJANGO_REVERSION:
+    print "Goo!"
     import reversion
     from reversion.admin import VersionAdmin
     AdminParentClass = VersionAdmin
     create_on_success = reversion.revision.create_on_success
 else:
+    print "Bar!"
     AdminParentClass = admin.ModelAdmin
     def create_on_success(func):
         """A do-nothing replacement if we're not using django-reversion."""
