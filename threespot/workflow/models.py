@@ -18,9 +18,14 @@ class WorkflowMixin(models.Model):
     class Meta:
         abstract = True
     
-    def get_draft_copies(self):
+    def is_draft_copy(self):
+        """ Is this item a draft copy?"""
+        return bool(self.copy_of)
+    is_draft_copy.boolean = True
+    
+    def get_draft_copy(self):
         """
-        Retrieve any draft copies.
+        Retrieve the draft copy of this item if it exists.
         """
         return self._default_manager.filter(copy_of__id=self.id)
     

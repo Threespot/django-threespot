@@ -18,13 +18,11 @@ from app_settings import UNPUBLISHED_STATES, PUBLISHED_STATE, \
     USE_DJANGO_REVERSION
 
 if USE_DJANGO_REVERSION:
-    print "Goo!"
     import reversion
     from reversion.admin import VersionAdmin
     AdminParentClass = VersionAdmin
     create_on_success = reversion.revision.create_on_success
 else:
-    print "Bar!"
     AdminParentClass = admin.ModelAdmin
     def create_on_success(func):
         """A do-nothing replacement if we're not using django-reversion."""
@@ -38,6 +36,8 @@ class WorkflowAdmin(AdminParentClass):
     merge_form_template = "workflow/admin/merge_confirmation.html"
     exclude = ['copy_of']
     m2m_relations_to_copy = []
+    slug_field = 'slug'
+    slug = False
     
     def get_urls(self):
         from django.conf.urls.defaults import patterns, url
@@ -230,10 +230,10 @@ class WorkflowAdmin(AdminParentClass):
         new_item.id = None
         new_item.status = UNPUBLISHED_STATES[0][0]
         new_item.copy_of = item
-        for field in ('name', 'title'):
-            if hasattr(new_item, field):
-                value = getattr(new_item, field) + " (draft copy)"
-                setattr(new_item, field, value)
+        if self.slug:
+            slug = getattr(new_item, self.slug_field)
+            slug += "-draft-copy"
+            setattr(new_item, self.slug_field, slug)
         new_item.save()
         for field in self.m2m_relations_to_copy:
             if hasattr(item, field):
@@ -243,10 +243,10 @@ class WorkflowAdmin(AdminParentClass):
         
     def _merge_item(self, original, copy):
         """ Delete original, clean up and publish copy."""
-        for field in ('name', 'title'):
-            if hasattr(copy, field):
-                value = getattr(copy, field).replace(" (draft copy)", "")
-                setattr(copy, field, value)
+        if self.slug:
+            import re
+            slug = re.sub("-draft-copy$", "", getattr(copy, self.slug_field))
+            setattr(copy, self.slug_field, slug)
         copy.copy_of = None
         copy.save()
         original.delete()
