@@ -54,7 +54,6 @@ class SettingsManager(object):
         not set in the django project's settings file.
         """
         setting_name = self.namespace + setting_name
-        print setting_name
         if required and not default:
             if not hasattr(settings, settings_name):
                 raise ImproperlyConfigured, (
