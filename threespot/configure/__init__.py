@@ -53,7 +53,8 @@ class SettingsManager(object):
         manager to raise an `ImproperlyConfigured` exception if the setting is 
         not set in the django project's settings file.
         """
-        setting_name = "%s_%s" % (self.namespace, setting_name)
+        setting_name = self.namespace + setting_name
+        print setting_name
         if required and not default:
             if not hasattr(settings, settings_name):
                 raise ImproperlyConfigured, (
