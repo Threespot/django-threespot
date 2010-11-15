@@ -266,11 +266,21 @@ class WorkflowAdmin(AdminParentClass):
 
     def publish_items(self, request, queryset):
         """ Admin action publishing the selected items."""
-        rows_updated = queryset.update(status=PUBLISHED_STATE)
+        # We should exclude any draft copies: these can only be published 
+        # through merging.
+        original_length = len(queryset)
+        rows_updated = queryset.filter(copy_of__exact=None).update(
+            status=PUBLISHED_STATE
+        )
         if rows_updated == 1:
             message = "One item was successfully published."
         else:
-            message = "%d items were successfully published."
+            message = "%d items were successfully published." % rows_updated
+        if original_length != rows_updated:
+            message += (
+                " Any draft copies selected were not published; to publish "
+                " these, merge them into the original."
+            )
         self.message_user(request, message)
     publish_items.short_description = "Publish selected items"
 
@@ -280,6 +290,6 @@ class WorkflowAdmin(AdminParentClass):
         if rows_updated == 1:
             message = "One item was successfully unpublished."
         else:
-            message = "%d items were successfully unpublished."
+            message = "%d items were successfully unpublished." % rows_updated
         self.message_user(request, message)
-    publish_items.short_description = "Unpublish selected items"
+    unpublish_items.short_description = "Unpublish selected items"
