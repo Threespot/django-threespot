@@ -19,3 +19,6 @@ UNPUBLISHED_STATES = filter(
     lambda c: c[0] != PUBLISHED_STATE, 
     WORKFLOW_CHOICES
 )
+
+# Subclass the Workflow model from django-reversion.
+USE_DJANGO_REVERSION = False

@@ -14,12 +14,21 @@ from django.utils.encoding import force_unicode
 from django.utils.functional import update_wrapper
 from django.utils.translation import ugettext_lazy as _
 
-import reversion
-from reversion.admin import VersionAdmin
+from app_settings import UNPUBLISHED_STATES, PUBLISHED_STATE, \
+    USE_DJANGO_REVERSION
 
-from app_settings import UNPUBLISHED_STATES, PUBLISHED_STATE
+if USE_DJANGO_REVERSION:
+    import reversion
+    from reversion.admin import VersionAdmin
+    AdminParentClass = VersionAdmin
+    create_on_success = reversion.revision.create_on_success
+else:
+    AdminParentClass = admin.ModelAdmin
+    def create_on_success(func):
+        """A do-nothing replacement if we're not using django-reversion."""
+        return func
 
-class WorkflowAdmin(VersionAdmin):
+class WorkflowAdmin(AdminParentClass):
     
     actions = ['publish_items', 'unpublish_items']
     change_form_template = "workflow/admin/change_form.html"
@@ -50,7 +59,7 @@ class WorkflowAdmin(VersionAdmin):
 
     @csrf_protect_m
     @transaction.commit_on_success
-    @reversion.revision.create_on_success    
+    @create_on_success    
     def copy_view(self, request, object_id, extra_context=None):
         """
         Create a draft copy of the item after user has confirmed. 
@@ -133,7 +142,7 @@ class WorkflowAdmin(VersionAdmin):
 
     @csrf_protect_m
     @transaction.commit_on_success
-    @reversion.revision.create_on_success
+    @create_on_success
     def merge_view(self, request, object_id, extra_context=None):
         """
         The 'merge' admin view for this model. Allows a user to merge a copy 
