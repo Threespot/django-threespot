@@ -1,0 +1,29 @@
+{% extends "admin/change_form.html" %}
+{% load i18n admin_modify adminmedia %}
+
+{% block object-tools %}
+    {% if change %}{% if not is_popup %}
+    <ul class="object-tools">
+        <li><a href="history/" class="historylink">{% trans "History" %}</a></li>
+        {% if original.copy_of%}
+        <li><a href="merge/" title="{%trans "Merge this copy over top of the original."%}">{% trans "Merge copy" %}</a></li>
+        <li><a href="../{{original.copy_of.pk}}/" title="{%trans "Edit the original."%}">{% trans "Edit original" %}</a></li>
+        {% else %}
+            {% if original.is_published %}
+                {% with original.get_draft_copies as draft_copies %}{% for draft_copy in draft_copies %}
+                <li><a href="../{{draft_copy.id}}/" title="{%trans "Edit draft copy."%}">{% trans "Edit draft copy" %}</a></li>
+                {% empty %}
+                <li><a href="copy/" title="{%trans "Create and unpublished copy of this item."%}">{% trans "Create draft copy" %}</a></li>
+                {% endfor %}{% endwith %}
+            {% endif %}
+        {% endif %}
+        {% if has_absolute_url %}
+            {%if original.is_published%}
+        <li><a href="../../../r/{{ content_type_id }}/{{ object_id }}/" class="viewsitelink">{% trans "View on site" %}</a></li>
+            {%else%}
+        <li><a href="../../../r/{{ content_type_id }}/{{ object_id }}/" class="viewsitelink">{% trans "Preview on site" %}</a></li>
+            {%endif%}
+        {% endif%}        
+    </ul>
+    {% endif %}{% endif %}
+{% endblock %}

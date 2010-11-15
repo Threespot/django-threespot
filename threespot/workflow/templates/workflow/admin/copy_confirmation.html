@@ -1,0 +1,27 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+     <a href="../../../../">{% trans "Home" %}</a> &rsaquo;
+     <a href="../../../">{{ app_label|capfirst }}</a> &rsaquo; 
+     <a href="../../">{{ opts.verbose_name_plural|capfirst }}</a> &rsaquo;
+     <a href="../">{{ object|truncatewords:"18" }}</a> &rsaquo;
+     {% trans 'Copy' %}
+</div>
+{% endblock %}
+
+{% block content %}
+    {%if draft_already_exists%}
+    <br/>
+    <p class="errornote">A draft copy already exists. You may <a href="{{edit_copy_url}}">edit</a> this copy, but only one draft copy can exist at a time.</p>
+    {%else%}
+    <p>{% blocktrans with object as escaped_object %}Are you sure you want to copy the {{ object_name }} "{{ escaped_object }}"?{%endblocktrans%}</p>
+    <form action="" method="post">{% csrf_token %}
+    <div>
+    <input type="hidden" name="post" value="yes" />
+    <input type="submit" value="{% trans "Yes, I'm sure" %}" />
+    </div>
+    </form>
+    {%endif%}
+{% endblock %}
