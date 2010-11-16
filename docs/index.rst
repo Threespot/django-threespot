@@ -17,4 +17,5 @@ Contents:
     components/documentation
     components/functional
     components/geo
+    components/workflow
     
