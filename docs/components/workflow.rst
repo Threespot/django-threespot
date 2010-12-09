@@ -84,6 +84,20 @@ Default: ``'p'``
 
 Although you can have as many status items as you want, only one can correspond to the published state. This is state in the workflow choices that means a piece of content is published. 
 
+DEFAULT_STATE
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: first unpublished state
+
+The default status (if no default is wanted, set to None). 
+
+ADDITIONAL_STATUS_KWARGS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Default: ``{}``
+
+This setting provides a hook for passing additional keyword arguments to the ``status`` field definition of the model.
+
+
 WORKFLOW_USE_DJANGO_REVERSION
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
