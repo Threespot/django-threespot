@@ -1,17 +1,25 @@
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from app_settings import WORKFLOW_CHOICES, PUBLISHED_STATE, UNPUBLISHED_STATES
+from app_settings import WORKFLOW_CHOICES, PUBLISHED_STATE, \
+    UNPUBLISHED_STATES, DEFAULT_STATE, ADDITIONAL_STATUS_KWARGS
 from managers import WorkflowManager
+
+
+status_kwargs = {
+    'choices': WORKFLOW_CHOICES,
+    'max_length': 1
+}
+if DEFAULT_STATE:
+    status_kwargs['default'] = DEFAULT_STATE
+if ADDITIONAL_STATUS_KWARGS:
+    status_kwargs.update(ADDITIONAL_STATUS_KWARGS)
 
 class WorkflowMixin(models.Model):
     """
     An abstract model mixin that can be used provide a publication status.
     """
-    status = models.CharField(_("Status"), 
-        choices = WORKFLOW_CHOICES,
-        max_length=1
-    )
+    status = models.CharField(_("Status"), **status_kwargs)
     copy_of = models.OneToOneField('self', null=True)
     objects = WorkflowManager()
     
