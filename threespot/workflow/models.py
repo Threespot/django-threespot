@@ -78,4 +78,4 @@ class WorkflowInlineMixin(BaseWorkflowMixin):
     status = models.CharField(_("Status"), **inline_status_kwargs)
     
     class Meta:
-        abstract = True
+        abstract = TrueS
