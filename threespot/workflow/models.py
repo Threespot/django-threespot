@@ -1,3 +1,5 @@
+from copy import copy
+
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -15,12 +17,16 @@ if DEFAULT_STATE:
 if ADDITIONAL_STATUS_KWARGS:
     status_kwargs.update(ADDITIONAL_STATUS_KWARGS)
 
-class WorkflowMixin(models.Model):
+# The inline workflow mixin cannot have a default, or empty
+# inlines will not save.
+inline_status_kwargs = copy(status_kwargs)
+inline_status_kwargs.pop('default')
+
+class BaseWorkflowMixin(models.Model):
     """
     An abstract model mixin that can be used provide a publication status.
     """
-    status = models.CharField(_("Status"), **status_kwargs)
-    copy_of = models.OneToOneField('self', null=True)
+    copy_of = models.OneToOneField('self', blank=True, null=True)
     objects = WorkflowManager()
     
     class Meta:
@@ -55,3 +61,21 @@ class WorkflowMixin(models.Model):
             self.status = status
             self.save()
             return True
+
+class WorkflowMixin(BaseWorkflowMixin):
+    """
+    An abstract model mixin that can be used provide a publication status.
+    """
+    status = models.CharField(_("Status"), **status_kwargs)
+    
+    class Meta:
+        abstract = True    
+
+class WorkflowInlineMixin(BaseWorkflowMixin):
+    """
+    An abstract model mixin that can be used provide a publication status.
+    """
+    status = models.CharField(_("Status"), **inline_status_kwargs)
+    
+    class Meta:
+        abstract = True
