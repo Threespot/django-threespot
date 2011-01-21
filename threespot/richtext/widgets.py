@@ -41,6 +41,13 @@ class CKEditor(forms.Textarea):
         super(CKEditor, self).__init__(*args, **kwargs)
         
     def _serialize_script_params(self):
+        # If the width attribute of the widget is set, we'll need to add a 
+        # hack for webkit browsers, otherwise, CKEditor toolbar floats will
+        # not clear properly. 
+        if self.ck_attrs.has_key('width'):
+            self.webkit_css_hack = "{ width: %s; }" % self.ck_attrs['width']
+        else:
+            self.webkit_css_hack = ''
         ck_attrs = ''
         if not 'language' in self.ck_attrs:
             self.ck_attrs['language'] = get_language()[:2]
@@ -52,7 +59,7 @@ class CKEditor(forms.Textarea):
     
     def render(self, name, value, attrs=None):
         template = """%(field)s
-        <style type="text/css"> label[for=id_%(field_name)s] { padding: 0 0 4px 4px; float: none; width: auto;} </style>
+        <style type="text/css"> label[for=id_%(field_name)s] { padding: 0 0 4px 4px; float: none; width: auto;} %(webkit_css_hack)s</style>
         <script type="text/javascript">
             var %(field_variable_name)s_CKeditor = new CKEDITOR.replace('id_%(field_name)s', {
                 %(options)s,
@@ -61,12 +68,18 @@ class CKEditor(forms.Textarea):
                     %(additional_plugins_js)s
                 ]
             });
-        </script>"""    
+        </script>"""
+        opts = self._serialize_script_params()
+        if self.webkit_css_hack:
+            self.webkit_css_hack = (
+                ".%s .cke_toolbox %s"
+            ) % (name, self.webkit_css_hack)
         return mark_safe(template % {
             'additional_plugins_js': mark_safe(self.additional_plugins_js),
             'field': super(CKEditor, self).render(name, value, attrs),
             'field_name': name,
             'field_variable_name': name.replace("-", "_"),
-            'options': self._serialize_script_params(),
+            'options': opts,
             'pallete': self.pallete,
+            'webkit_css_hack': self.webkit_css_hack
         })
