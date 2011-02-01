@@ -2,6 +2,7 @@ from functools import partial
 
 from django import forms
 from django.conf import settings
+from django.core.files.images import get_image_dimensions
 
 from threespot.text import get_readable_file_size
 
@@ -25,3 +26,15 @@ def validate_file_size(file, max_size_kb=1024, label='file'):
 
 # A common use-case, planned for:
 validate_image_size = partial(validate_file_size, label='image')
+
+def validate_image_dimensions(image_file, required_width, required_height):
+    """
+    Validates the dimensions, raises a ValidationErrror for images
+    that are too large.
+    """
+    width, height = get_image_dimensions(image_file)
+    if width != required_width or height != required_height:
+        raise forms.ValidationError, (
+            "Images must be %d pixels wide and %d pixels high; This "
+            "image is %d pixels wide and %d pixels high."
+        ) % (required_width, required_height, width, height)
