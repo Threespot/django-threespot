@@ -7,7 +7,7 @@ from django.contrib.admin.options import csrf_protect_m
 from django.contrib.admin.util import unquote, get_deleted_objects
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
-from django.db import transaction
+from django.db import transaction, router
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.utils.encoding import force_unicode
@@ -183,8 +183,9 @@ class WorkflowAdmin(AdminParentClass):
 
         # Populate deleted_objects, a data structure of all related objects
         # that will also be deleted when this copy is deleted.
-        (deleted_objects, perms_needed) = get_deleted_objects(
-            (obj.copy_of,), opts, request.user, self.admin_site
+        using = router.db_for_write(self.model)
+        (deleted_objects, perms_needed, protected) = get_deleted_objects(
+            [obj.copy_of], opts, request.user, self.admin_site, using
         )
         # Flatten nested list:
         deleted_objects = map(
