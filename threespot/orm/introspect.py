@@ -7,6 +7,17 @@ from threespot.functional import partial
 This module provides helper functions for finding our more information about a specific model or object.
 """
 
+
+def get_generic_referencing_models(my_model):
+    model_list = []
+    for model in models.get_models():
+        for field in model._meta.fields:
+            if isinstance(field, generic.GenericForeignKey):
+                if field.rel and field.rel.to == my_model:
+                    model_list.append(model)
+                    continue
+    return model_list    
+
 def get_referencing_models(my_model, field_instance=None):
     """
     This function returns a list of all models which have some sort of relation 
