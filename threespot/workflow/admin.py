@@ -4,14 +4,15 @@ from itertools import chain
 from django import template
 from django.contrib import admin
 from django.contrib.admin.options import csrf_protect_m
-from django.contrib.admin.util import unquote, get_deleted_objects
+from django.contrib.admin.util import get_deleted_objects, unquote
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db import transaction, router
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.utils.encoding import force_unicode
 from django.utils.functional import update_wrapper
+from django.utils.html import escape
 from django.utils.translation import ugettext_lazy as _
 
 from app_settings import UNPUBLISHED_STATES, PUBLISHED_STATE, \
@@ -61,7 +62,7 @@ class WorkflowAdmin(AdminParentClass):
 
     @csrf_protect_m
     @transaction.commit_on_success
-    @create_on_success    
+    @create_on_success
     def copy_view(self, request, object_id, extra_context=None):
         """
         Create a draft copy of the item after user has confirmed. 
@@ -180,6 +181,12 @@ class WorkflowAdmin(AdminParentClass):
                     'key': escape(object_id)
                 }
             )
+
+        if not obj.is_draft_copy:
+            return HttpResponseBadRequest(_(
+                'The %s object could not be merged because it is not a'
+                'draft copy. There is nothing to merge it into.'
+            ) % force_unicode(opts.verbose_name))
 
         # Populate deleted_objects, a data structure of all related objects
         # that will also be deleted when this copy is deleted.

@@ -22,7 +22,8 @@
 {% else %}
     <p>{% blocktrans with object as escaped_object %}Are you sure you want to merge the {{ object_name }} "{{ escaped_object }}" with "{{escaped_original}}"? All of the following related items will be modified:{% endblocktrans %}</p>
     <ul>{{ deleted_objects|unordered_list }}</ul>
-    <p>Additionally <em>{{escaped_original}}</em> will be published.</p>
+    <p>{% blocktrans with object as escaped_object %}Additionally, <em>{{ escaped_object }}</em> will be published.{% endblocktrans %}</p>
+    
     <form action="" method="post">{% csrf_token %}
     <div>
     <input type="hidden" name="post" value="yes" />
