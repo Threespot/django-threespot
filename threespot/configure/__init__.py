@@ -55,7 +55,7 @@ class SettingsManager(object):
         """
         setting_name = self.namespace + setting_name
         if required and not default:
-            if not hasattr(settings, settings_name):
+            if not hasattr(settings, setting_name):
                 raise ImproperlyConfigured, (
                 "%s must be set to use this django application."         
                 ) % setting_name
