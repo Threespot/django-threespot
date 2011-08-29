@@ -1,12 +1,8 @@
-import re
-
 from django.contrib.admin.views.decorators import staff_member_required
 from django.views.static import serve 
 
 from threespot.documentation.app_settings import PUBLISH_PATH
 
-
-_web_file = re.compile("\.css|js|html|png|gif|jpg|jpeg|ico{1}$")
 
 @staff_member_required
 def documentation(request, path, *args, **kwargs):
@@ -17,7 +13,7 @@ def documentation(request, path, *args, **kwargs):
     """
     kwargs['document_root'] = PUBLISH_PATH
     kwargs['show_indexes'] = False
-    if not _web_file.search(path):
+    
+    if not path or path.endswith("/"):
         path += "index.html"
-    print path
     return serve(request, path, *args, **kwargs)
