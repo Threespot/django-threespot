@@ -1,10 +1,12 @@
 from copy import copy
+from datetime import datetime, date
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from app_settings import WORKFLOW_CHOICES, PUBLISHED_STATE, \
-    UNPUBLISHED_STATES, DEFAULT_STATE, ADDITIONAL_STATUS_KWARGS
+    UNPUBLISHED_STATES, DEFAULT_STATE, ADDITIONAL_STATUS_KWARGS, \
+    ENABLE_POSTDATED_PUBLISHING
 from managers import WorkflowManager
 
 
@@ -13,7 +15,7 @@ status_kwargs = {
     'max_length': 1
 }
 if DEFAULT_STATE:
-    status_kwargs['default'] = DEFAULT_STATE
+    status_kwargs['default'] = DEFAULT_STATE[0]
 if ADDITIONAL_STATUS_KWARGS:
     status_kwargs.update(ADDITIONAL_STATUS_KWARGS)
 
@@ -45,7 +47,19 @@ class BaseWorkflowMixin(models.Model):
     
     def is_published(self):
         """ Boolean property indicating if item is published."""
-        return self.status == PUBLISHED_STATE
+            
+        has_published_status = self.status == PUBLISHED_STATE
+        if not has_published_status:
+            return False
+        if ENABLE_POSTDATED_PUBLISHING:
+            date_field = self._meta.get_latest_by
+            if date_field:
+                date_val = getattr(self, date_field)
+                if isinstance(date_val, datetime):
+                    return date_val <= datetime.now()
+                if isinstance(date_val, date):
+                    return date_val <= date.today()
+        return True
     is_published.boolean = True
     
     def publish(self):

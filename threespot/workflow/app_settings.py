@@ -25,10 +25,11 @@ DEFAULT_STATE = workflow_settings_mgr.create('DEFAULT_STATE',
     default = UNPUBLISHED_STATES[0]
 )
 
-# Any additional kwargs for the status field
+# Any additional kwargs for the status field. By default, the field
+# should be indexed for obvious performance reasons.
 ADDITIONAL_STATUS_KWARGS = workflow_settings_mgr.create(
     'ADDITIONAL_STATUS_KWARGS',
-    default = {}
+    default = {'db_index': True}
 )
 
 # Subclass the Workflow model from django-reversion.
@@ -36,3 +37,10 @@ USE_DJANGO_REVERSION = workflow_settings_mgr.create('USE_DJANGO_REVERSION',
     default = False
 )
 
+# If True, will consider content dated in the future "unpublished" regardless of
+# the status. Will use the model's Meta 'get-latest-by' field to determine which
+# model field is to be used for the date.
+ENABLE_POSTDATED_PUBLISHING = workflow_settings_mgr.create(
+    'ENABLE_POSTDATED_PUBLISHING',
+    default=True
+)

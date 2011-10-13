@@ -105,6 +105,13 @@ Default: ``False``
 
 In a nod to more heayweight versioning, you can tell workflow to use django-reversions for models it manages as well. It's up to you to install that package, but if you have it installed, setting this to ``True`` will add versioning to all you workflow-managed models.
 
+ENABLE_POSTDATED_PUBLISHING
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``True``
+
+If True, will consider content dated in the future "unpublished" regardless of the status. Will use the model's Meta 'get-latest-by' field to determine which model field is to be used for the date.
+
 Options for the admin model
 ----------------------------
 

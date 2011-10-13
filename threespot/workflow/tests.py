@@ -1,3 +1,4 @@
+from datetime import date, timedelta
 from django.conf import settings
 from django.conf.urls.defaults import include, patterns
 from django.core.urlresolvers import reverse
@@ -12,6 +13,7 @@ from threespot.workflow.app_settings import PUBLISHED_STATE
 from threespot.workflow.forms import WorkflowAdminFormMixin
 from threespot.workflow.models import WorkflowMixin
 
+
 class TestArticle(WorkflowMixin, models.Model):
     """A mock object for testing workflow"""
     slug = models.SlugField()
@@ -19,6 +21,20 @@ class TestArticle(WorkflowMixin, models.Model):
     
     def __unicode__(self):
         return self.title
+
+
+class TestDatedArticle(WorkflowMixin, models.Model):
+    """A mock object for testing workflow"""
+    pubdate = models.DateField()
+    slug = models.SlugField()
+    title = models.CharField(max_length=255)
+
+    class Meta:
+        get_latest_by = 'pubdate'
+
+    def __unicode__(self):
+        return self.title
+
 
 class TestArticleAdminForm(WorkflowAdminFormMixin):
     
@@ -118,6 +134,34 @@ class WorkflowTest(TestCase):
         )
         article.publish()
         self.assertTrue(article.is_published())
+    
+    def test_postdated_publishing(self):
+        """
+        Verify that workflow status with postdated publishing works as
+        expected.
+        """
+        from threespot.workflow import app_settings
+        app_settings.ENABLE_POSTDATED_PUBLISHING = True
+        
+        article = TestDatedArticle(
+            slug = 'article',
+            title = 'Title',
+            pubdate = date.today() + timedelta(days=1),
+            status = PUBLISHED_STATE
+        )
+        article.save()
+        self.assertFalse(article.is_published())
+        self.assertTrue(
+            article.pk not in [a.pk for a in \
+                TestDatedArticle.objects.published()
+            ]
+        )
+        article.pubdate = date.today()
+        article.save()
+        self.assertTrue(article.is_published())
+        self.assertTrue(
+            article.pk in [a.pk for a in TestDatedArticle.objects.published()]
+        )
     
     def test_draft_copy_and_merge(self):
         """ Test that draft copy mode works as expected."""
