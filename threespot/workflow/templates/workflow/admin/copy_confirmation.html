@@ -1,6 +1,26 @@
 {% extends "admin/base_site.html" %}
 {% load i18n %}
-
+{% block extrastyle %}
+{{ block.super }}
+<style type="text/css">
+    .warning {
+        padding: 10px 15px;
+        background: #FFFBC6;
+        min-height: 42px;
+        -webkit-border-radius: 10px;
+        -khtml-border-radius: 10px;
+        -moz-border-radius: 10px;
+        border-radius: 10px;
+        border-style: dotted;
+        border-width: thin;
+        border-color: #dcdcdc;
+        padding: 10px 15px 10px 15px;
+        margin-bottom: 15px;
+        margin-top: 15px;
+        width: 500px;
+    }
+</style>
+{% endblock %}
 {% block breadcrumbs %}
 <div class="breadcrumbs">
      <a href="../../../../">{% trans "Home" %}</a> &rsaquo;
@@ -17,6 +37,15 @@
     <p class="errornote">A draft copy already exists. You may <a href="{{edit_copy_url}}">edit</a> this copy, but only one draft copy can exist at a time.</p>
     {%else%}
     <p>{% blocktrans with object as escaped_object %}Are you sure you want to copy the {{ object_name }} "{{ escaped_object }}"?{%endblocktrans%}</p>
+    {% if referencing_objects %}
+    <div class="warning">
+    <p><strong>Please Note:</strong> The following items reference this {{ object_name }}:</p>
+    <ul>{% for title, type in referencing_objects %}
+        <li>{{ title }} (a {{ type }})</li>
+    {% endfor %}</ul>
+    <p>They will continue to reference the original object&mdash;not this draft copy&mdash;until this draft copy is merged back onto the original.</p>
+    </div>
+    {%endif %}
     <form action="" method="post">{% csrf_token %}
     <div>
     <input type="hidden" name="post" value="yes" />

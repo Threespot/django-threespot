@@ -1,9 +1,29 @@
 {% extends "admin/change_form.html" %}
 {% load i18n admin_modify adminmedia %}
 
+{% block extrastyle %}
+{{ block.super }}
+<style type="text/css">
+    .object-tools li.draft-copy-notice {
+        border: 1px solid #A31D1D;
+        background: #A31D1D;
+        color: #fff;
+        padding: 5px 5px 3px 5px;
+        line-height: 15px;
+        margin-top: -6px;
+        margin-right: 20px;
+        -webkit-border-radius: 4px;
+        -khtml-border-radius: 4px;
+        -moz-border-radius: 4px;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
 {% block object-tools %}
     {% if change %}{% if not is_popup %}
     <ul class="object-tools">
+        {% if original.copy_of%}<li class="draft-copy-notice">DRAFT COPY</li>{% endif %}
         <li><a href="history/" class="historylink">{% trans "History" %}</a></li>
         {% if original.copy_of%}
         <li><a href="merge/" title="{%trans "Merge this copy over top of the original."%}">{% trans "Merge copy" %}</a></li>

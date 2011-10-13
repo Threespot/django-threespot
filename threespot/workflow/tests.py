@@ -42,7 +42,6 @@ class TestArticleAdminForm(WorkflowAdminFormMixin):
         model = TestArticle
 
 class TestArticleAdmin(WorkflowAdmin):
-    slug = True
     form = TestArticleAdminForm
 
 admin.site.register(TestArticle, TestArticleAdmin)

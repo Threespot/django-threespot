@@ -1,6 +1,28 @@
 {% extends "admin/base_site.html" %}
 {% load i18n %}
 
+{% block extrastyle %}
+{{ block.super }}
+<style type="text/css">
+    .warning {
+        padding: 10px 15px;
+        background: #FFFBC6;
+        min-height: 42px;
+        -webkit-border-radius: 10px;
+        -khtml-border-radius: 10px;
+        -moz-border-radius: 10px;
+        border-radius: 10px;
+        border-style: dotted;
+        border-width: thin;
+        border-color: #dcdcdc;
+        padding: 10px 15px 10px 15px;
+        margin-bottom: 15px;
+        margin-top: 15px;
+        width: 500px;
+    }
+</style>
+{% endblock %}
+
 {% block breadcrumbs %}
 <div class="breadcrumbs">
      <a href="../../../../">{% trans "Home" %}</a> &rsaquo;
@@ -21,8 +43,14 @@
     </ul>
 {% else %}
     <p>{% blocktrans with object as escaped_object %}Are you sure you want to merge the {{ object_name }} "{{ escaped_object }}" with "{{escaped_original}}"? All of the following related items will be modified:{% endblocktrans %}</p>
-    <ul>{{ deleted_objects|unordered_list }}</ul>
-    <p>{% blocktrans with object as escaped_object %}Additionally, <em>{{ escaped_object }}</em> will be published.{% endblocktrans %}</p>
+    <div class="warning">
+    <p><strong>Please Note:</strong> The following items reference the original of this {{ object_name }}:</p>
+    <ul>{% for title, type in referencing_objects %}
+        <li>{{ title }} (a {{ type }})</li>
+    {% endfor %}</ul>
+    <p>They will be updated to reference this draft if you continue.</p>
+    </div>
+    <p>{% blocktrans with object as escaped_object %}Additionally, this copy&mdash;<em>{{ escaped_object }}</em>&mdash;will be published.{% endblocktrans %}</p>
     
     <form action="" method="post">{% csrf_token %}
     <div>

@@ -7,7 +7,8 @@ from django.contrib.admin.options import csrf_protect_m
 from django.contrib.admin.util import get_deleted_objects, unquote
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
-from django.db import transaction, router
+from django.db import models, transaction, router
+from django.db.models.fields.related import RelatedField
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.utils.encoding import force_unicode
@@ -15,8 +16,11 @@ from django.utils.functional import update_wrapper
 from django.utils.html import escape
 from django.utils.translation import ugettext_lazy as _
 
-from app_settings import UNPUBLISHED_STATES, PUBLISHED_STATE, \
-    USE_DJANGO_REVERSION
+from threespot.orm.introspect import get_referencing_objects, \
+    get_generic_referencing_objects, lookup_referencing_object_relationships
+from threespot.workflow.app_settings import UNPUBLISHED_STATES, \
+    PUBLISHED_STATE, USE_DJANGO_REVERSION
+
 
 if USE_DJANGO_REVERSION:
     import reversion
@@ -36,10 +40,20 @@ class WorkflowAdmin(AdminParentClass):
     copy_form_template = "workflow/admin/copy_confirmation.html"
     merge_form_template = "workflow/admin/merge_confirmation.html"
     exclude = ['copy_of']
-    m2m_relations_to_copy = []
     slug_field = 'slug'
     slug = False
     
+    def __init__(self, *args, **kwargs):
+        """
+        Intelligently determine if there is a slug field.
+        """
+        super(WorkflowAdmin, self).__init__(*args, **kwargs)
+        for field in self.model._meta.fields:
+            if field.__class__ == models.fields.SlugField \
+                or issubclass(field.__class__, models.fields.SlugField):
+                self.slug_field = field.name
+                self.slug = True
+
     def get_urls(self):
         from django.conf.urls.defaults import patterns, url
         info = self.model._meta.app_label, self.model._meta.module_name
@@ -70,8 +84,9 @@ class WorkflowAdmin(AdminParentClass):
         opts = self.model._meta
         app_label = opts.app_label
 
-        obj = self.get_object(request, unquote(object_id))    
-    
+        obj = self.get_object(request, unquote(object_id))
+        object_refs = None
+
         # For our purposes, permission to copy is equivalent to 
         # has_add_permisison.
         if not self.has_add_permission(request):
@@ -135,10 +150,17 @@ class WorkflowAdmin(AdminParentClass):
             draft_already_exists = False
             title = _("Are you sure?")
             edit_copy_url = None
+            generic_refs = get_generic_referencing_objects(obj)
+            direct_refs = get_referencing_objects(obj)
+            object_refs = [(unicode(o), o._meta.verbose_name) for o in \
+                chain(direct_refs, generic_refs)
+            ]
+            
         context = {
             "title": title,
             "object_name": force_unicode(opts.verbose_name),
             "object": obj,
+            "referencing_objects": object_refs,
             "opts": opts,
             "root_path": self.admin_site.root_path,
             "app_label": app_label,
@@ -190,18 +212,13 @@ class WorkflowAdmin(AdminParentClass):
 
         # Populate deleted_objects, a data structure of all related objects
         # that will also be deleted when this copy is deleted.
-        using = router.db_for_write(self.model)
-        (deleted_objects, perms_needed, protected) = get_deleted_objects(
-            [obj.copy_of], opts, request.user, self.admin_site, using
-        )
-        # Flatten nested list:
-        deleted_objects = map(
-            lambda i: hasattr(i, '__iter__') and i or [i],
-            deleted_objects
-        )
-        deleted_objects = chain(*deleted_objects)
-        deleted_objects = list(deleted_objects)
-        
+        generic_refs = get_generic_referencing_objects(obj.copy_of)
+        direct_refs = get_referencing_objects(obj.copy_of)
+        direct_refs = filter(lambda o: obj != o, direct_refs)
+        object_refs = [(unicode(o), o._meta.verbose_name) for o in \
+            chain(direct_refs, generic_refs)
+        ]
+        perms_needed = False
         if request.POST: # The user has already confirmed the merge.
             if perms_needed:
                 raise PermissionDenied
@@ -226,8 +243,7 @@ class WorkflowAdmin(AdminParentClass):
             "object_name": force_unicode(opts.verbose_name),
             "object": obj,
             "escaped_original": force_unicode(obj.copy_of), 
-            "deleted_objects": deleted_objects,
-            "perms_lacking": perms_needed,
+            "referencing_objects": object_refs,
             "opts": opts,
             "root_path": self.admin_site.root_path,
             "app_label": app_label,
@@ -254,23 +270,41 @@ class WorkflowAdmin(AdminParentClass):
             slug += "-draft-copy"
             setattr(new_item, self.slug_field, slug)
         new_item.save()
-        for field in self.m2m_relations_to_copy:
-            if hasattr(item, field):
-                setattr(new_item, field, getattr(item, field).all())
+        fk_rels = [f.name for f in self.model._meta.fields \
+            if issubclass(f.__class__, RelatedField) and f.name != 'copy_of'
+        ]
+        for field in fk_rels:
+            setattr(new_item, field, getattr(item, field))
+        m2m_rels = [f.name for f, _ in self.model._meta.get_m2m_with_model()]
+        for field in m2m_rels:
+            setattr(new_item, field, getattr(item, field).all())
         new_item.save()
         return new_item
         
-    def _merge_item(self, original, copy):
+    def _merge_item(self, original, draft_copy):
         """ Delete original, clean up and publish copy."""
+        refs = filter(
+            lambda obj: obj != draft_copy,
+            get_referencing_objects(original)
+        )
+        for ref in refs:
+            field_names = lookup_referencing_object_relationships(original, ref)
+            for field_name in field_names:
+                setattr(ref, field_name, draft_copy)
+            ref.save()
+        setattr(original, self.slug_field, original.slug + "-merge")
+        original.save()
         if self.slug:
             import re
-            slug = re.sub("-draft-copy$", "", getattr(copy, self.slug_field))
-            setattr(copy, self.slug_field, slug)
-        copy.copy_of = None
-        copy.save()
+            slug = re.sub(
+                "-draft-copy$", "", getattr(draft_copy, self.slug_field)
+            )
+            setattr(draft_copy, self.slug_field, slug)
+        draft_copy.copy_of = None
+        draft_copy.save()
         original.delete()
-        copy.publish()
-        return copy
+        draft_copy.publish()
+        return draft_copy
 
     def publish_items(self, request, queryset):
         """ Admin action publishing the selected items."""
