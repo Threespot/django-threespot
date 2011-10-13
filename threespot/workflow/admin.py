@@ -5,10 +5,11 @@ from django import template
 from django.contrib import admin
 from django.contrib.admin.options import csrf_protect_m
 from django.contrib.admin.util import get_deleted_objects, unquote
+from django.contrib.contenttypes import generic
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db import models, transaction, router
-from django.db.models.fields.related import RelatedField
+from django.db.models.fields.related import RelatedField, ManyToManyField
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.utils.encoding import force_unicode
@@ -283,6 +284,7 @@ class WorkflowAdmin(AdminParentClass):
         
     def _merge_item(self, original, draft_copy):
         """ Delete original, clean up and publish copy."""
+        # Handle FK and M2M references.
         refs = filter(
             lambda obj: obj != draft_copy,
             get_referencing_objects(original)
@@ -290,8 +292,21 @@ class WorkflowAdmin(AdminParentClass):
         for ref in refs:
             field_names = lookup_referencing_object_relationships(original, ref)
             for field_name in field_names:
-                setattr(ref, field_name, draft_copy)
+                fld_class = ref._meta.get_field(field_name).__class__
+                if issubclass(fld_class, models.fields.related.ManyToManyField):
+                    getattr(ref, field_name).remove(original)
+                    getattr(ref, field_name).add(draft_copy)
+                else:
+                    setattr(ref, field_name, draft_copy)
+                    ref.save()
+        # Handle generic references.
+        for ref in get_generic_referencing_objects(original):
+            generic_fk_field = [f for f in ref._meta.virtual_fields \
+                if isinstance(f, generic.GenericForeignKey)
+            ][0].name
+            setattr(ref, generic_fk_field, draft_copy)
             ref.save()
+        # Overwrite the old object.
         setattr(original, self.slug_field, original.slug + "-merge")
         original.save()
         if self.slug:

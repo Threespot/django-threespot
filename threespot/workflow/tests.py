@@ -4,6 +4,8 @@ from django.conf.urls.defaults import include, patterns
 from django.core.urlresolvers import reverse
 from django.contrib import admin
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes import generic
 from django.db import models
 from django import forms
 from django.test import TestCase
@@ -36,15 +38,34 @@ class TestDatedArticle(WorkflowMixin, models.Model):
         return self.title
 
 
+class FKReferencingThing(models.Model):
+    """ A mock object that has an FK to a worfklow object."""
+    ref = models.ForeignKey('TestArticle')
+
+
+class M2MReferencingThing(models.Model):
+    """ A mock object that has an FK to a worfklow object."""
+    ref = models.ManyToManyField('TestArticle')
+
+
+class GenericReferencingThing(models.Model):
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    content_object = generic.GenericForeignKey('content_type', 'object_id')
+
+
 class TestArticleAdminForm(WorkflowAdminFormMixin):
     
     class Meta:
         model = TestArticle
 
+
 class TestArticleAdmin(WorkflowAdmin):
     form = TestArticleAdminForm
 
+
 admin.site.register(TestArticle, TestArticleAdmin)
+
 
 class WorkflowTest(TestCase):
 
@@ -174,7 +195,7 @@ class WorkflowTest(TestCase):
         # Test draft copying.
         articles = TestArticle.objects.all()
         response = self.client.get(self.get_admin_url('copy', article))
-        self.assertTrue(not response.context['draft_already_exists'])
+        self.assertFalse(response.context['draft_already_exists'])
         self.assertEqual(response.context['object'].pk, article.pk)
         response = self.client.post(
             self.get_admin_url('copy', article),
@@ -220,6 +241,103 @@ class WorkflowTest(TestCase):
             "A new title"
         )
         self.assertTrue(len(TestArticle.objects.all()) == 1)
+
+    def test_fk_ref_preservation(self):
+        """
+        Verify that FK references to the original are preserved when
+        the draft copy is merged over it.
+        """
+        self.login()
+        article = TestArticle(
+            slug = 'article',
+            title = 'Title',
+            status = PUBLISHED_STATE
+        )
+        article.save()
+        ref_thing = FKReferencingThing(ref=article)
+        ref_thing.save()
+        # Make a draft copy.
+        response = self.client.post(
+            self.get_admin_url('copy', article),
+            {'id': article.pk}
+        )
+        draft_copy = TestArticle.objects.draft_copies()[0]
+        # Merge it back.
+        response = self.client.post(
+            self.get_admin_url('merge', draft_copy),
+            {'id': article.pk}
+        )
+        # Verify refs are preserved.
+        articles = TestArticle.objects.all()
+        ref_thing = FKReferencingThing.objects.all()[0]
+        self.assertEqual(len(articles), 1)
+        self.assertEqual(articles[0], ref_thing.ref)
+    
+    def test_m2m_ref_preservation(self):
+        """
+        Verify that M2M references to the original are preserved when
+        the draft copy is merged over it.
+        """
+        
+        self.login()
+        article = TestArticle(
+            slug = 'article',
+            title = 'Title',
+            status = PUBLISHED_STATE
+        )
+        article.save()
+        ref_thing = M2MReferencingThing()
+        ref_thing.save()
+        ref_thing.ref.add(article)
+        self.assertTrue(article.m2mreferencingthing_set.all()[0] == ref_thing)
+        # Make a draft copy.
+        response = self.client.post(
+            self.get_admin_url('copy', article),
+            {'id': article.pk}
+        )
+        draft_copy = TestArticle.objects.draft_copies()[0]
+        self.assertFalse(bool(draft_copy.m2mreferencingthing_set.all()))
+        # Merge it back.
+        response = self.client.post(
+            self.get_admin_url('merge', draft_copy),
+            {'id': article.pk}
+        )
+        # Verify refs are preserved.
+        articles = TestArticle.objects.all()
+        ref_thing = M2MReferencingThing.objects.all()[0]
+        self.assertEqual(len(articles), 1)
+        self.assertEqual(articles[0], ref_thing.ref.all()[0])
+
+    def test_generic_ref_preservation(self):
+        """
+        Verify that Generic references to the original are preserved when
+        the draft copy is merged over it.
+        """
+        self.login()
+        article = TestArticle(
+            slug = 'article',
+            title = 'Title',
+            status = PUBLISHED_STATE
+        )
+        article.save()
+        ref_thing = GenericReferencingThing(content_object=article)
+        ref_thing.save()
+        # Make a draft copy.
+        response = self.client.post(
+            self.get_admin_url('copy', article),
+            {'id': article.pk}
+        )
+        draft_copy = TestArticle.objects.draft_copies()[0]
+        # Merge it back.
+        response = self.client.post(
+            self.get_admin_url('merge', draft_copy),
+            {'id': article.pk}
+        )
+        # Verify refs are preserved.
+        articles = TestArticle.objects.all()
+        self.assertEqual(len(articles), 1)
+        ref_thing = GenericReferencingThing.objects.all()[0]
+        self.assertEqual(ref_thing.content_object, articles[0])
 
     def test_admin_form(self):
         """ Verify the form prevents us from publishing a draft copy."""
