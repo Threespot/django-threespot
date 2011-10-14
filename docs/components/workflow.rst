@@ -13,6 +13,13 @@ What this django application is (probably) not good for
 
 If you need a heavyweight workflow--editorial queues, version control, branching and merging of content, that sort of stuff--than look elsewhere; workflow is likely not for you. And unless you are building a CMS for a *big* team, rethink if you really do need that stuff.
 
+What this django application does
+------------------------------------------------------------------
+
+This application provides a base model, manager, form, and model admin that—-when integrated into your existing Django apps-—allow you to transition a Django model through a sequence of specified states. By default these states are "draft" and "published", but can be set to anything you choose. Models can easily be queried by publication status. 
+
+Additionally this application allows you to use the Django admin to create "draft copies" of published content. This allows users to edit and preview content that is published on your site without the changes being public, until the draft copy is merged back onto the original, updating the model with any changes while preserving the original associations.
+
 Installing
 -----------
 
@@ -95,7 +102,7 @@ ADDITIONAL_STATUS_KWARGS
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Default: ``{}``
 
-This setting provides a hook for passing additional keyword arguments to the ``status`` field definition of the model.
+This setting provides a hook for passing additional keyword arguments to the ``status`` field definition of the model. Note: this field is indexed by default.
 
 
 WORKFLOW_USE_DJANGO_REVERSION
@@ -110,12 +117,12 @@ ENABLE_POSTDATED_PUBLISHING
 
 Default: ``True``
 
-If True, will consider content dated in the future "unpublished" regardless of the status. Will use the model's Meta 'get-latest-by' field to determine which model field is to be used for the date.
+If True, will consider content dated in the future "unpublished" regardless of the status. This allows users to pre-publish content and have it go live automatically by a certain date. This will use the model's Meta 'get-latest-by' field to determine which model field is to be used for the date.
 
-Options for the admin model
-----------------------------
+Unused Options for the admin model
+-------------------------------------
 
-There are a also a few options pertaining to the admin which you can set on the modeladmin instance that subclasses the ``WorkflowAdmin`` class::
+Earlier versions used the following options. All of these are **no longer needed** and will be ignored if set. Workflow now uses more intelligent introspection of models to remove the burden of setting this data from the user.::
 
     class ArticleAdmin(WorkflowAdmin):
         form = ArticleAdminForm
