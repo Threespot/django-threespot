@@ -3,6 +3,7 @@ from itertools import chain
 
 from django import template
 from django.contrib import admin
+from django.contrib.admin import helpers
 from django.contrib.admin.options import csrf_protect_m
 from django.contrib.admin.util import get_deleted_objects, unquote
 from django.contrib.contenttypes import generic
@@ -11,7 +12,7 @@ from django.core.urlresolvers import reverse
 from django.db import models, transaction, router
 from django.db.models.fields.related import RelatedField, ManyToManyField
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.shortcuts import get_object_or_404, render_to_response
 from django.utils.encoding import force_unicode
 from django.utils.functional import update_wrapper
 from django.utils.html import escape
@@ -74,6 +75,105 @@ class WorkflowAdmin(AdminParentClass):
             ),
         )
         return workflow_urls + urls
+
+    def has_publish_permission(self, request):
+        permission = "%s.modify_published_pages" % self.model._meta.app_label
+        return request.user.has_perm(permission)
+    
+    def add_view(self, request, form_url='', extra_context=None):
+        """
+        Wrap the add view to do permissions checking.
+        """
+        if request.method == 'POST' and not request.user.is_superuser:
+            if not self.has_publish_permission(request):
+                if request.POST.get('status') == PUBLISHED_STATE:
+                    raise PermissionDenied((
+                        "You do not have permission to publish %s objects."
+                    ) % self.model._meta.verbose_name)
+        else:
+            extra_context = {
+                'no_publish_perm': not self.has_publish_permission(request)
+            }
+        return super(WorkflowAdmin, self).add_view(request,
+            form_url=form_url,
+            extra_context=extra_context
+        )
+
+    def change_view(self, request, object_id, extra_context=None):
+        """
+        Wrap the change view to do permissions checking.
+        """
+        if request.method == 'POST' and not request.user.is_superuser:
+            if not self.has_publish_permission(request):
+                # This check is less comprehensive than the following one, but
+                # it requires no database lookup of the original object.
+                if request.POST.get('status') == PUBLISHED_STATE:
+                    raise PermissionDenied((
+                        "You do not have permission to publish %s objects "
+                        "or edit published objects."
+                    ) % self.model._meta.verbose_name)
+                # Lookup the object pre-change and see if it was alreay 
+                # published. If so: permission denied.
+                obj = self.get_object(request, unquote(object_id))
+                if obj.is_published():
+                    raise PermissionDenied((
+                        "You do not have permission to edit published %s"
+                        " objects."
+                    ) % self.model._meta.verbose_name)
+        else:
+            extra_context = {
+                'no_publish_perm': not self.has_publish_permission(request)
+            }
+        return super(WorkflowAdmin, self).change_view(request, object_id,
+            extra_context=extra_context
+        )
+
+    def changelist_view(self, request, extra_context=None):
+        if not self.has_publish_permission(request):
+            action_index = int(request.POST.get('index', 0))
+            action_list = request.POST.getlist('action')
+            if action_list and action_list[action_index] == 'delete_selected':
+                selected_ids = request.POST.getlist(
+                    helpers.ACTION_CHECKBOX_NAME
+                )
+                name = len(selected_ids) > 1 and "these items" or "this item"
+                for obj_id in selected_ids:
+                    obj = get_object_or_404(self.model, id=obj_id)
+                    if obj.is_published():
+                        change_list_url = reverse("admin:%s_%s_changelist" % (
+                            obj._meta.app_label, obj._meta.module_name
+                        ))
+                        if len(selected_ids) > 1:
+                            msg = (
+                                "You do not have permission to delete these "
+                                " items: at least one is already published."
+                            )
+                        else:
+                            msg = (
+                                "You do not have permission to delete this "
+                                " item: it is already published."
+                            )
+                        self.message_user(request, msg)
+                        return HttpResponseRedirect(change_list_url)
+        return super(WorkflowAdmin, self).changelist_view(request, 
+            extra_context=extra_context
+        )
+
+    def delete_view(self, request, object_id, extra_context=None):
+        obj = self.get_object(request, unquote(object_id))
+        if obj.is_published and not self.has_publish_permission(request):
+            change_list_url = reverse("admin:%s_%s_changelist" % (
+                obj._meta.app_label, obj._meta.module_name
+            ))
+            msg = (
+                "You do not have permission to delete this item: it is "
+                " already published."
+            )
+            self.message_user(request, msg)
+            return HttpResponseRedirect(change_list_url)
+        return super(WorkflowAdmin, self).delete_view(request, object_id, 
+            extra_context=extra_context
+        )
 
     @csrf_protect_m
     @transaction.commit_on_success

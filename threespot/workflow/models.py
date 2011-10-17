@@ -83,7 +83,10 @@ class WorkflowMixin(BaseWorkflowMixin):
     status = models.CharField(_("Status"), **status_kwargs)
     
     class Meta:
-        abstract = True    
+        abstract = True
+        permissions = (
+            ('modify_published_pages', 'Can change published pages'),
+        )
 
 class WorkflowInlineMixin(BaseWorkflowMixin):
     """
