@@ -24,4 +24,44 @@ class TestCasePlus(TestCase):
         # If the objects are instances of a Django model, verify they have the 
         # same primary key.
         if issubclass(obj.__class__, models.Model):
-             self.assertEqual(context_object.pk, obj.pk)   
+             self.assertEqual(context_object.pk, obj.pk)
+
+     def verify_status_code_response(self, url, code):
+         """
+         Verify that a GET request to the given URL returns the given status 
+         code.
+         """
+         response = self.client.get(url)
+         if response.status_code != code:
+             raise AssertionError((
+                 "The url '%s' returned a %d status code, not a %d."
+             ) % (url, response.status_code, code))
+         return response        
+
+     def verify_200_response(self, url):
+         """
+         Shortcut function: verify that a GET request to the given URL returns 
+         an "OK" (200) status code.
+         """
+         return self.verify_status_code_response(url, 200)
+
+     def verify_301_response(self, url):
+         """
+         Shortcut function: verify that a GET request to the given URL returns 
+         a "Moved Permanently" (301) status code.
+         """         
+         return self.verify_status_code_response(url, 301)
+
+     def verify_302_response(self, url):
+         """
+         Shortcut function: verify that a GET request to the given URL returns 
+         a "Found" (302) status code.
+         """
+         return self.verify_status_code_response(url, 302)
+
+     def verify_404_response(self, url):
+         """
+         Shortcut function: verify that a GET request to the given URL returns 
+         a "Not Found" (404) status code.
+         """
+         return self.verify_status_code_response(url, 404)    
