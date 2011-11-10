@@ -91,9 +91,10 @@ class WorkflowAdmin(AdminParentClass):
                         "You do not have permission to publish %s objects."
                     ) % self.model._meta.verbose_name)
         else:
-            extra_context = {
+            extra_context = extra_context or {}
+            extra_context.update({
                 'no_publish_perm': not self.has_publish_permission(request)
-            }
+            })
         return super(WorkflowAdmin, self).add_view(request,
             form_url=form_url,
             extra_context=extra_context
@@ -121,9 +122,10 @@ class WorkflowAdmin(AdminParentClass):
                         " objects."
                     ) % self.model._meta.verbose_name)
         else:
-            extra_context = {
+            extra_context = extra_context or {}
+            extra_context.update({
                 'no_publish_perm': not self.has_publish_permission(request)
-            }
+            })
         return super(WorkflowAdmin, self).change_view(request, object_id,
             extra_context=extra_context
         )
