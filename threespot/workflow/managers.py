@@ -90,7 +90,7 @@ class WorkflowManager(models.Manager):
         postdate_kw = self.get_postdate_unpublish_filter_kwarg()
         if postdate_kw:
             return qs.filter(
-                ~Q(status=PUBLISHED_STATE) | Q(**{postdate_kw: datetime.now()})
+                ~models.Q(status=PUBLISHED_STATE) | models.Q(**{postdate_kw: datetime.now()})
             )
         return qs.exclude(status=PUBLISHED_STATE)        
     
