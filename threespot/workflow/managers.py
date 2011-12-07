@@ -89,7 +89,7 @@ class WorkflowManager(models.Manager):
         qs = self._get_expanded_queryset(select_related=select_related)
         postdate_kw = self.get_postdate_unpublish_filter_kwarg()
         if postdate_kw:
-            return sq.filter(
+            return qs.filter(
                 ~Q(status=PUBLISHED_STATE) | Q(**{postdate_kw: datetime.now()})
             )
         return qs.exclude(status=PUBLISHED_STATE)        
