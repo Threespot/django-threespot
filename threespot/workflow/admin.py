@@ -287,15 +287,13 @@ class WorkflowAdmin(AdminParentClass):
         """
         opts = self.model._meta
         app_label = opts.app_label
-
         obj = self.get_object(request, unquote(object_id))
-        
+
         # For our purposes, permission to merge is equivalent to 
         # has_change_permisison and has_delete_permission.
         if not self.has_change_permission(request, obj) \
             or not self.has_delete_permission(request, obj) :
             raise PermissionDenied
-
         if obj is None:
             raise Http404(_(
                 '%(name)s object with primary key %(key)r does not exist.') %   
@@ -304,10 +302,9 @@ class WorkflowAdmin(AdminParentClass):
                     'key': escape(object_id)
                 }
             )
-
-        if not obj.is_draft_copy:
+        if not obj.is_draft_copy():
             return HttpResponseBadRequest(_(
-                'The %s object could not be merged because it is not a'
+                'The %s object could not be merged because it is not a '
                 'draft copy. There is nothing to merge it into.'
             ) % force_unicode(opts.verbose_name))
 
