@@ -20,7 +20,29 @@ classifiers = [
 root_dir = os.path.dirname(__file__)
 if not root_dir:
     root_dir = '.'
+
+
+# Compile the list of packages available, because distutils doesn't have
+# an easy way to do this.
+packages, data_files = [], []
+root_dir = os.path.dirname(__file__)
+if root_dir != '':
+    os.chdir(root_dir)
+threespot_dir = 'threespot'
+
+for dirpath, dirnames, filenames in os.walk(threespot_dir):
+    # Ignore dirnames that start with '.'
+    for i, dirname in enumerate(dirnames):
+        if dirname.startswith('.'): del dirnames[i]
+    if '__init__.py' in filenames:
+        packages.append('.'.join(fullsplit(dirpath)))
+    elif filenames:
+        data_files.append(
+            [dirpath, [os.path.join(dirpath, f) for f in filenames]]
+        )
+
 long_desc = open(root_dir + '/README.rst').read()
+
 
 setup(
     name='django-threespot',
@@ -29,14 +51,8 @@ setup(
     author='James Stevenson',
     author_email='james.m.stevenson at threespot dot com',
     license='BSD License',
-    packages=[
-        'threespot.admin', 'threespot.cache', 'threespot.configure',
-        'threespot.documentation', 'threespot.functional',
-        'threespot.geo', 'threespot.html5', 'threespot.middleware',
-        'threespot.nav', 'threespot.orm', 'threespot.richtext',
-        'threespot.testing', 'threespot.text', 'threespot.utils',
-        'threespot.validation', 'threespot.workflow', 'threespot'
-    ],
+    data_files=data_files,
+    packages=packages,
     package_dir={'threespot': 'threespot'},
     description=(
         'Various cool, useful utilities and small, reusable django apps'
