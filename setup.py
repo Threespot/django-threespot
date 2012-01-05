@@ -29,7 +29,14 @@ setup(
     author='James Stevenson',
     author_email='james.m.stevenson at threespot dot com',
     license='BSD License',
-    packages=['threespot'],
+    packages=[
+        'threespot.admin', 'threespot.cache', 'threespot.configure',
+        'threespot.documentation', 'threespot.functional',
+        'threespot.geo', 'threespot.html5', 'threespot.middleware',
+        'threespot.nav', 'threespot.orm', 'threespot.richtext',
+        'threespot.testing', 'threespot.text', 'threespot.utils',
+        'threespot.validation', 'threespot.workflow'
+    ],
     package_dir={'threespot': 'threespot'},
     description=(
         'Various cool, useful utilities and small, reusable django apps'
