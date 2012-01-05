@@ -35,7 +35,7 @@ setup(
         'threespot.geo', 'threespot.html5', 'threespot.middleware',
         'threespot.nav', 'threespot.orm', 'threespot.richtext',
         'threespot.testing', 'threespot.text', 'threespot.utils',
-        'threespot.validation', 'threespot.workflow', 'threespot.__init__'
+        'threespot.validation', 'threespot.workflow', 'threespot'
     ],
     package_dir={'threespot': 'threespot'},
     description=(
