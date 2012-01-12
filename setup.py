@@ -35,20 +35,34 @@ def fullsplit(path, result=None):
 # an easy way to do this.
 packages, data_files = [], []
 root_dir = os.path.dirname(__file__)
-if root_dir != '':
-    os.chdir(root_dir)
+if not root_dir:
+    root_dir = "."
+os.chdir(root_dir)
 threespot_dir = 'threespot'
 
 for dirpath, dirnames, filenames in os.walk(threespot_dir):
     # Ignore dirnames that start with '.'
     for i, dirname in enumerate(dirnames):
-        if dirname.startswith('.'): del dirnames[i]
+        if dirname.startswith('.'):
+            del dirnames[i]
     if '__init__.py' in filenames:
         packages.append('.'.join(fullsplit(dirpath)))
     elif filenames:
         data_files.append(
             [dirpath, [os.path.join(dirpath, f) for f in filenames]]
         )
+
+template_patterns = [
+    'templates/*.html',
+    'templates/*/*.html',
+    'templates/*/*/*.html',
+    '*.data'
+]
+
+package_data = dict(
+    (package_name, template_patterns)
+    for package_name in packages
+)
 
 long_desc = open(root_dir + '/README.rst').read()
 
@@ -61,7 +75,7 @@ setup(
     author_email='james.m.stevenson at threespot dot com',
     license='BSD License',
     data_files=data_files,
-    packages=packages,
+    packages=package_data,
     package_dir={'threespot': 'threespot'},
     description=(
         'Various cool, useful utilities and small, reusable django apps'
