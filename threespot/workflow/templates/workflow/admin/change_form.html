@@ -66,13 +66,13 @@
                 {% endfor %}{% endwith %}
             {% endif %}
         {% endif %}
-        {% if has_absolute_url %}
+        {% if has_absolute_url and original.get_absolute_url %}
             {%if original.is_published%}
         <li><a href="../../../r/{{ content_type_id }}/{{ object_id }}/" class="viewsitelink">{% trans "View on site" %}</a></li>
             {%else%}
         <li><a href="../../../r/{{ content_type_id }}/{{ object_id }}/" class="viewsitelink">{% trans "Preview on site" %}</a></li>
             {%endif%}
-        {% endif%}        
+        {% endif%}
     </ul>
     {% endif %}{% endif %}
 {% endblock %}
