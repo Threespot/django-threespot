@@ -101,7 +101,7 @@ def get_generic_referencing_objects(my_object,
             for ct_field, fk_field in virtual_field_properties:
                 ct = getattr(obj, ct_field)
                 fk = getattr(obj, fk_field)
-                if ct.model_class() == my_model and fk == my_object.pk:
+                if ct and ct.model_class() == my_model and fk == my_object.pk:
                     object_list.append(obj)
                     continue
     return object_list
