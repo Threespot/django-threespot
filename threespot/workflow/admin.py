@@ -377,7 +377,11 @@ class WorkflowAdmin(AdminParentClass):
             setattr(new_item, field, getattr(item, field))
         m2m_rels = [f.name for f, _ in self.model._meta.get_m2m_with_model()]
         for field in m2m_rels:
-            setattr(new_item, field, getattr(item, field).all())
+            # If there is a custom "through" model, punt on trying to copy 
+            # things over.
+            model_field = new_item._meta.get_field_by_name(field)[0]
+            if model_field.rel.through._meta.auto_created:
+                setattr(new_item, field, getattr(item, field).all())
         new_item.save()
         return new_item
         
