@@ -39,7 +39,7 @@ def expire_view_cache(view_name, args=[], kwargs={}, namespace=None,\
     return False
 
 
-def invalidate_template_cache2(fragment_name, *variables):
+def invalidate_template_cache(fragment_name, *variables):
     """
     From http://djangosnippets.org/snippets/1593/
     
