@@ -38,7 +38,8 @@ def expire_view_cache(view_name, args=[], kwargs={}, namespace=None,\
         return True
     return False
 
-def invalidate_template_cache(fragment_name, *variables):
+
+def invalidate_template_cache2(fragment_name, *variables):
     """
     From http://djangosnippets.org/snippets/1593/
     
@@ -53,30 +54,7 @@ def invalidate_template_cache(fragment_name, *variables):
 
     invalidate_template_cache("user_cache", user.id)
     """
-    args = md5_constructor(u':'.join(apply(_compose(urlquote, unicode),\
-        variables
-    )))
+    args = md5_constructor(u':'.join([urlquote(unicode(v)) for v in variables]))
     cache_key = 'template.cache.%s.%s' % (fragment_name, args.hexdigest())
     cache.delete(cache_key)
-
-def _compose(func_1, func_2, unpack=False):
-    """
-    Created by Collin Winter (http://oakwinter.com/code/functional/)
-
-    compose(func_1, func_2, unpack=False) -> function
-
-    The function returned by compose is a composition of func_1 and func_2.
-    That is, compose(func_1, func_2)(5) == func_1(func_2(5))
-    """
-    if not callable(func_1):
-        raise TypeError("First argument to compose must be callable")
-    if not callable(func_2):
-        raise TypeError("Second argument to compose must be callable")
-
-    if unpack:
-        def composition(*args, **kwargs):
-            return func_1(*func_2(*args, **kwargs))
-    else:
-        def composition(*args, **kwargs):
-            return func_1(func_2(*args, **kwargs))
-    return composition
+    return cache_key

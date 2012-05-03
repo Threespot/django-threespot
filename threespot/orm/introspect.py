@@ -1,11 +1,10 @@
+from functools import partial
 from itertools import chain
 from operator import or_
 
-from django.contrib.contenttypes import generic
 from django.db import models
 from django.db.models import Q
 
-from threespot.functional import partial
 
 """
 This module provides helper functions for finding our more information about a specific model or object.
