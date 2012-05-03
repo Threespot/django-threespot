@@ -8,7 +8,7 @@ version = '0.5'
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: BSD License",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python",
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries",
