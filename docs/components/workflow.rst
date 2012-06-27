@@ -11,7 +11,7 @@ content (e.g. "Draft" or "Preview").
 What this django application is (probably) not good for
 ------------------------------------------------------------------
 
-If you need a heavyweight workflow--editorial queues, version control, branching and merging of content, that sort of stuff--than look elsewhere; workflow is likely not for you. And unless you are building a CMS for a *big* team, rethink if you really do need that stuff.
+If you need a heavyweight workflow--editorial queues, version control, frequent branching and merging of content, that sort of stuff--than look elsewhere; workflow is likely not for you. And unless you are building a CMS for a *big* team, rethink if you really do need that stuff.
 
 What this django application does
 ------------------------------------------------------------------
@@ -57,6 +57,13 @@ In our ``publications.admin`` module, we'll modify our ``ArticleAdmin``  definit
 
     class ArticleAdmin(WorkflowAdmin):
         form = ArticleAdminForm
+
+If you wish to disable the draft copy feature of workflow in the admin of the particular model you're creating the admin for, you can do so with the ``draft_copy_allowed`` attribute of your ``WorkflowAdmin`` subclass::
+
+    class ArticleAdmin(WorkflowAdmin):
+        draft_copy_allowed = False
+
+This must be explicitly disabled; by default draft copying is enabled for all models.
 
 If you're using a custom ``ModelForm`` for your modeladmin (as we are above), then you will also want to subclass *that* with the ``WorkflowAdminFormMixin``::
 
@@ -110,7 +117,7 @@ WORKFLOW_USE_DJANGO_REVERSION
 
 Default: ``False``
 
-In a nod to more heayweight versioning, you can tell workflow to use django-reversions for models it manages as well. It's up to you to install that package, but if you have it installed, setting this to ``True`` will add versioning to all you workflow-managed models.
+In a nod to more heavyweight versioning, you can tell workflow to use django-reversions for models it manages as well. It's up to you to install that package, but if you have it installed, setting this to ``True`` will add versioning to all you workflow-managed models.
 
 ENABLE_POSTDATED_PUBLISHING
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
