@@ -42,14 +42,16 @@
     {% endfor %}
     </ul>
 {% else %}
-    <p>{% blocktrans with object as escaped_object %}Are you sure you want to merge the {{ object_name }} "{{ escaped_object }}" with "{{escaped_original}}"? All of the following related items will be modified:{% endblocktrans %}</p>
+    <p>{% blocktrans with object as escaped_object %}Are you sure you want to merge the {{ object_name }} "{{ escaped_object }}" with "{{escaped_original}}"?{% endblocktrans %}</p>
+    {% if referencing_objects %}
     <div class="warning">
-    <p><strong>Please Note:</strong> The following items reference the original of this {{ object_name }}:</p>
+    <p><strong>Please Note:</strong> The following items reference the original of this {{ object_name }} and will be updated to reference the item you're merging:</p>
     <ul>{% for title, type in referencing_objects %}
         <li>{{ title }} (a {{ type }})</li>
     {% endfor %}</ul>
     <p>They will be updated to reference this draft if you continue.</p>
     </div>
+    {% endif %}
     <p>{% blocktrans with object as escaped_object %}Additionally, this copy&mdash;<em>{{ escaped_object }}</em>&mdash;will be published.{% endblocktrans %}</p>
     
     <form action="" method="post">{% csrf_token %}

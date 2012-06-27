@@ -2,6 +2,7 @@ from functools import partial
 from itertools import chain
 from operator import or_
 
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Q
 
@@ -75,8 +76,7 @@ get_referencing_fk_models = partial(
 
 _default_queryset = lambda model: model.objects.all()
 
-def get_generic_referencing_objects(my_object,
-                                    get_queryset=_default_queryset):
+def get_generic_referencing_objects(my_object, get_queryset=_default_queryset):
     """
     This function returns a list of all objects which have some sort of generic
     relationship to the given ``my_object`` object. One optional argument:
@@ -85,8 +85,9 @@ def get_generic_referencing_objects(my_object,
          objects. By default, Model.objects.all() is used.
 
     """
-    object_list = []
+    querysets = []
     my_model = my_object.__class__
+    ctype_pk = ContentType.objects.get_for_model(my_model).pk
     # Any model which has virtual fields could have Generic FK references to
     # the given model.
     for model in (m for m in models.get_models() \
@@ -94,16 +95,17 @@ def get_generic_referencing_objects(my_object,
         virtual_field_properties = []
         for field in model._meta.virtual_fields:
             virtual_field_properties.append(
-                (field.ct_field, field.fk_field,)
+                (field.ct_field + "__pk", field.fk_field,)
             )
-        for obj in get_queryset(model):
-            for ct_field, fk_field in virtual_field_properties:
-                ct = getattr(obj, ct_field)
-                fk = getattr(obj, fk_field)
-                if ct and ct.model_class() == my_model and fk == my_object.pk:
-                    object_list.append(obj)
-                    continue
-    return object_list
+        fk_filters = [Q(**{fk: my_object.pk}) for _, fk in virtual_field_properties]
+        ctype_filters = [Q(**{ct: ctype_pk}) for ct, _ in virtual_field_properties]
+        querysets.append(
+            get_queryset(model).filter(*[
+                reduce(or_, ctype_filters),
+                reduce(or_, fk_filters)]
+        ))
+    # ... then chain querysets together.
+    return list(chain(*querysets))
 
 def get_referencing_objects(my_object, get_queryset=_default_queryset):
     """

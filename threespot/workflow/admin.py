@@ -5,12 +5,12 @@ from django import template
 from django.contrib import admin
 from django.contrib.admin import helpers
 from django.contrib.admin.options import csrf_protect_m
-from django.contrib.admin.util import get_deleted_objects, unquote
+from django.contrib.admin.util import unquote
 from django.contrib.contenttypes import generic
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
-from django.db import models, transaction, router
-from django.db.models.fields.related import RelatedField, ManyToManyField
+from django.db import models, transaction
+from django.db.models.fields.related import RelatedField
 from django.http import Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render_to_response
 from django.utils.encoding import force_unicode
@@ -46,10 +46,8 @@ class WorkflowAdmin(AdminParentClass):
     slug = False
     
     def __init__(self, *args, **kwargs):
-        """
-        Intelligently determine if there is a slug field.
-        """
         super(WorkflowAdmin, self).__init__(*args, **kwargs)
+        #Programatically determine if there is a slug field.
         for field in self.model._meta.fields:
             if field.__class__ == models.fields.SlugField \
                 or issubclass(field.__class__, models.fields.SlugField):
@@ -138,7 +136,6 @@ class WorkflowAdmin(AdminParentClass):
                 selected_ids = request.POST.getlist(
                     helpers.ACTION_CHECKBOX_NAME
                 )
-                name = len(selected_ids) > 1 and "these items" or "this item"
                 for obj_id in selected_ids:
                     obj = get_object_or_404(self.model, id=obj_id)
                     if obj.is_published():
@@ -410,7 +407,8 @@ class WorkflowAdmin(AdminParentClass):
             setattr(ref, generic_fk_field, draft_copy)
             ref.save()
         # Overwrite the old object.
-        setattr(original, self.slug_field, original.slug + "-merge")
+        if self.slug:
+            setattr(original, self.slug_field, original.slug + "-merge")
         original.save()
         if self.slug:
             import re
