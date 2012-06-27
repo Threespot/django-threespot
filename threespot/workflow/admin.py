@@ -4,9 +4,11 @@ from itertools import chain
 from django import template
 from django.contrib import admin
 from django.contrib.admin import helpers
+from django.contrib.admin.models import LogEntry
 from django.contrib.admin.options import csrf_protect_m
 from django.contrib.admin.util import unquote
 from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db import models, transaction
@@ -40,6 +42,7 @@ class WorkflowAdmin(AdminParentClass):
     actions = ['publish_items', 'unpublish_items']
     change_form_template = "workflow/admin/change_form.html"
     copy_form_template = "workflow/admin/copy_confirmation.html"
+    draft_copy_allowed = True
     merge_form_template = "workflow/admin/merge_confirmation.html"
     exclude = ['copy_of']
     slug_field = 'slug'
@@ -122,6 +125,7 @@ class WorkflowAdmin(AdminParentClass):
         else:
             extra_context = extra_context or {}
             extra_context.update({
+                'draft_copy_allowed': self.draft_copy_allowed,
                 'no_publish_perm': not self.has_publish_permission(request)
             })
         return super(WorkflowAdmin, self).change_view(request, object_id,
@@ -184,6 +188,11 @@ class WorkflowAdmin(AdminParentClass):
         opts = self.model._meta
         app_label = opts.app_label
 
+        if not self.draft_copy_allowed:
+            return HttpResponseBadRequest("Draft copy not allowed for %s." % 
+                force_unicode(opts.verbose_name_plural)
+            )
+
         obj = self.get_object(request, unquote(object_id))
         object_refs = None
 
@@ -214,15 +223,22 @@ class WorkflowAdmin(AdminParentClass):
                     _('A draft copy already exists.')
                 )
                 return HttpResponseRedirect(request.path)
-            obj_display = force_unicode(obj) + " copied."
-            self.log_change(request, obj, obj_display)
             copy = self._copy_item(obj)
-
+            original_message = 'Created a draft copy for %s "%s".' % (
+                force_unicode(obj._meta.verbose_name),
+                force_unicode(obj)
+            )
+            copy_message = 'Copied from %s "%s".' % (
+                force_unicode(obj._meta.verbose_name),
+                force_unicode(obj)
+            )
+            self.log_change(request, obj, original_message)
+            self.log_change(request, copy, copy_message)            
             self.message_user(
                 request, 
                 _('The %(name)s "%(obj)s" was copied successfully.') % {
                     'name': force_unicode(opts.verbose_name), 
-                    'obj': force_unicode(obj_display)
+                    'obj': force_unicode(obj)
                 }
             )
             
@@ -286,6 +302,12 @@ class WorkflowAdmin(AdminParentClass):
         """
         opts = self.model._meta
         app_label = opts.app_label
+
+        if not self.draft_copy_allowed:
+            return HttpResponseBadRequest("Draft copy not allowed for %s." % 
+                force_unicode(opts.verbose_name_plural)
+            )
+
         obj = self.get_object(request, unquote(object_id))
 
         # For our purposes, permission to merge is equivalent to 
@@ -318,18 +340,27 @@ class WorkflowAdmin(AdminParentClass):
         perms_needed = False
         if request.POST: # The user has already confirmed the merge.
             if perms_needed:
-                raise PermissionDenied
-            obj_display = force_unicode(obj) + " merged."
-            self.log_change(request, obj, obj_display)
-            
+                raise PermissionDenied            
             original = obj.copy_of
+            original_pk = original.pk
             self._merge_item(original, obj)
-
+            # Look up admin log entries for the old object and reassign them
+            # to the new object.
+            ctype = ContentType.objects.get_for_model(original)
+            LogEntry.objects.filter(
+                content_type=ctype,
+                object_id=original_pk
+            ).update(object_id=obj.pk)
+            message = 'Merged %s "%s".' % (
+                force_unicode(obj._meta.verbose_name),
+                force_unicode(obj)
+            )
+            self.log_change(request, obj, message)
             self.message_user(
                 request, 
                 _('The %(name)s "%(obj)s" was merged successfully.') % {
                     'name': force_unicode(opts.verbose_name), 
-                    'obj': force_unicode(obj_display)
+                    'obj': force_unicode(obj)
                 }
             )
 
