@@ -2,18 +2,18 @@
 Workflow App
 ===================
 
-What this django application is good for
+What this Django application is good for
 ------------------------------------------------------------------
 
 The ``threespot.workflow`` app provides a simple workflow for models. It helps with previewing content, and supports applying different states to a piece of
 content (e.g. "Draft" or "Preview").
 
-What this django application is (probably) not good for
+What this Django application is (probably) not good for
 ------------------------------------------------------------------
 
 If you need a heavyweight workflow--editorial queues, version control, frequent branching and merging of content, that sort of stuff--than look elsewhere; workflow is likely not for you. And unless you are building a CMS for a *big* team, rethink if you really do need that stuff.
 
-What this django application does
+What this Django application does
 ------------------------------------------------------------------
 
 This application provides a base model, manager, form, and model admin that—-when integrated into your existing Django apps-—allow you to transition a Django model through a sequence of specified states. By default these states are "draft" and "published", but can be set to anything you choose. Models can easily be queried by publication status. 
