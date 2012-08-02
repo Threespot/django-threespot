@@ -1,6 +1,4 @@
-include INSTALL
-include LICENSE
-include README.rst
-include threespot/geo/zipcode.data
-recursive-include docs * 
-recursive-include threespot/workflow/templates * 
+include INSTALL.txt
+include LICENSE.txt
+include README.txt
+recursive-include threespot *.data *.html

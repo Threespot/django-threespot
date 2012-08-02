@@ -1,0 +1,1 @@
+Various utilities that save time on Django projects. Includes helpers for the admin, caching, configuration, documentation, geolocation, navigation, the ORM, forms, and more. Docs are here: http://readthedocs.org/docs/django-threespot/en/latest/index.html
