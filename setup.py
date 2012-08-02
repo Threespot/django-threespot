@@ -64,7 +64,7 @@ package_data = dict(
     for package_name in packages
 )
 
-long_desc = open(root_dir + '/README.rst').read()
+long_desc = open(root_dir + '/README.txt').read()
 
 
 setup(
