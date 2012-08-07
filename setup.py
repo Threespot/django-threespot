@@ -78,5 +78,5 @@ setup(
     ),
     classifiers=classifiers,
     long_description=long_desc,
-    install_requires=['django>=1.3']
+    install_requires=['django>=1.3.3']
 )
