@@ -4,11 +4,11 @@ from datetime import datetime, date
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from app_settings import WORKFLOW_CHOICES, PUBLISHED_STATE, \
+from threespot.workflow.app_settings import WORKFLOW_CHOICES, PUBLISHED_STATE, \
     UNPUBLISHED_STATES, DEFAULT_STATE, ADDITIONAL_STATUS_KWARGS, \
     ENABLE_POSTDATED_PUBLISHING
-from managers import WorkflowManager
-
+from threespot.workflow.managers import WorkflowManager
+from threespot.workflow.utils import get_current_datetime
 
 status_kwargs = {
     'choices': WORKFLOW_CHOICES,
@@ -23,6 +23,7 @@ if ADDITIONAL_STATUS_KWARGS:
 # inlines will not save.
 inline_status_kwargs = copy(status_kwargs)
 inline_status_kwargs.pop('default')
+
 
 class BaseWorkflowMixin(models.Model):
     """
@@ -47,7 +48,6 @@ class BaseWorkflowMixin(models.Model):
     
     def is_published(self):
         """ Boolean property indicating if item is published."""
-            
         has_published_status = self.status == PUBLISHED_STATE
         if not has_published_status:
             return False
@@ -56,7 +56,8 @@ class BaseWorkflowMixin(models.Model):
             if date_field:
                 date_val = getattr(self, date_field)
                 if isinstance(date_val, datetime):
-                    return date_val <= datetime.now()
+                    now = get_current_datetime()
+                    return date_val <= now
                 if isinstance(date_val, date):
                     return date_val <= date.today()
         return True

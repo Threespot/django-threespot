@@ -1,9 +1,7 @@
-from datetime import datetime
-
 from django.db import models
 
-from app_settings import ENABLE_POSTDATED_PUBLISHING, PUBLISHED_STATE
-
+from threespot.workflow.app_settings import ENABLE_POSTDATED_PUBLISHING, PUBLISHED_STATE
+from threespot.workflow.utils import get_current_datetime
 
 class WorkflowManager(models.Manager): 
     """
@@ -81,7 +79,8 @@ class WorkflowManager(models.Manager):
         filter_kwargs = {'status': PUBLISHED_STATE}
         postdate_kwarg = self.get_postdate_publish_filter_kwarg()
         if postdate_kwarg:
-            filter_kwargs[postdate_kwarg] = datetime.now()
+            now = get_current_datetime()
+            filter_kwargs[postdate_kwarg] = now
         return qs.filter(**filter_kwargs)
     
     def unpublished(self, select_related=None):
@@ -89,8 +88,9 @@ class WorkflowManager(models.Manager):
         qs = self._get_expanded_queryset(select_related=select_related)
         postdate_kw = self.get_postdate_unpublish_filter_kwarg()
         if postdate_kw:
+            now = get_current_datetime()
             return qs.filter(
-                ~models.Q(status=PUBLISHED_STATE) | models.Q(**{postdate_kw: datetime.now()})
+                ~models.Q(status=PUBLISHED_STATE) | models.Q(**{postdate_kw: now})
             )
         return qs.exclude(status=PUBLISHED_STATE)        
     
