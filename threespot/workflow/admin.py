@@ -30,10 +30,10 @@ if USE_DJANGO_REVERSION:
     import reversion
     from reversion.admin import VersionAdmin
     AdminParentClass = VersionAdmin
-    create_on_success = reversion.revision.create_on_success
+    create_revision = reversion.create_revision
 else:
     AdminParentClass = admin.ModelAdmin
-    def create_on_success(func):
+    def create_revision(func):
         """A do-nothing replacement if we're not using django-reversion."""
         return func
 
@@ -180,7 +180,7 @@ class WorkflowAdmin(AdminParentClass):
 
     @csrf_protect_m
     @transaction.commit_on_success
-    @create_on_success
+    @create_revision()
     def copy_view(self, request, object_id, extra_context=None):
         """
         Create a draft copy of the item after user has confirmed. 
@@ -294,7 +294,7 @@ class WorkflowAdmin(AdminParentClass):
 
     @csrf_protect_m
     @transaction.commit_on_success
-    @create_on_success
+    @create_revision()
     def merge_view(self, request, object_id, extra_context=None):
         """
         The 'merge' admin view for this model. Allows a user to merge a copy 
