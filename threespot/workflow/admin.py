@@ -33,9 +33,20 @@ if USE_DJANGO_REVERSION:
     create_revision = reversion.create_revision
 else:
     AdminParentClass = admin.ModelAdmin
-    def create_revision(func):
+    from functools import wraps
+    
+    class CreateRevisionNoop(object):
+        def __call__(self, func):
+            """A do-nothing replacement if we're not using django-reversion."""
+            @wraps(func)
+            def noop(*args, **kwargs):
+                with self:
+                    return func(*args, **kwargs)
+            return noop
+
+    def create_revision():
         """A do-nothing replacement if we're not using django-reversion."""
-        return func
+        return CreateRevisionNoop()
 
 class WorkflowAdmin(AdminParentClass):
     
